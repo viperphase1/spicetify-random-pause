@@ -15,6 +15,7 @@
 
   let enabled = false;
   let timer = null;
+  let autoResuming = false; // Track if we're doing an auto-resume
 
   const MIN_DELAY = 5000;   // 5 seconds
   const MAX_DELAY = 20000;  // 20 seconds
@@ -35,13 +36,23 @@
         // Resume after 10 seconds
         timer = setTimeout(() => {
           if (enabled) {
+            autoResuming = true;
             Spicetify.Player.play();
-            schedulePause(); // Schedule next random pause
           }
         }, PAUSE_DURATION);
       }
     }, randomDelay());
   }
+
+  // Re-schedule on play (manual or auto)
+  Spicetify.Player.addEventListener("onplaypause", (e) => {
+    if (e.data.isPaused === false && enabled) {
+      if (autoResuming) {
+        autoResuming = false;
+      }
+      schedulePause();
+    }
+  });
 
   // Re-schedule on song change
   Spicetify.Player.addEventListener("songchange", schedulePause);
