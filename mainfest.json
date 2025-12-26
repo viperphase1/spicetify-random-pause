@@ -1,0 +1,10 @@
+{
+    "name": "Random Pause",
+    "description": "Randomly pauses playback. Useful for musical chairs, musical statues, pass the parcel, and similar games.",
+    "preview": "screenshot.png",
+    "main": "random-pause.js",
+    "readme": "README.md",
+    "authors": [
+      { "name": "Overjuiced" }
+    ]
+}
