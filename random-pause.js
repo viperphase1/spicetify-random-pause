@@ -1,15 +1,24 @@
-// pass-the-parcel.js
+// random-pause.js
 (function RandomPause() {
-  if (!Spicetify?.Player) {
-    setTimeout(RandomPause, 300);
+  const ready = Spicetify?.Player &&
+                Spicetify?.Menu &&
+                Spicetify?.React &&
+                Spicetify?.ReactDOM &&
+                Spicetify?.showNotification;
+
+  if (!ready) {
+    setTimeout(RandomPause, 500);
     return;
   }
+
+  console.log("[Random Pause] Initializing...");
 
   let enabled = false;
   let timer = null;
 
   const MIN_DELAY = 5000;   // 5 seconds
   const MAX_DELAY = 20000;  // 20 seconds
+  const PAUSE_DURATION = 10000; // 10 seconds pause
 
   function randomDelay() {
     return Math.floor(Math.random() * (MAX_DELAY - MIN_DELAY)) + MIN_DELAY;
@@ -18,32 +27,42 @@
   function schedulePause() {
     clearTimeout(timer);
 
-    if (!enabled || !Spicetify.Player.isPlaying()) return;
+    if (!enabled) return;
 
     timer = setTimeout(() => {
       if (enabled && Spicetify.Player.isPlaying()) {
         Spicetify.Player.pause();
+        // Resume after 10 seconds
+        timer = setTimeout(() => {
+          if (enabled) {
+            Spicetify.Player.play();
+            schedulePause(); // Schedule next random pause
+          }
+        }, PAUSE_DURATION);
       }
     }, randomDelay());
   }
 
-  // Re-schedule whenever playback changes
-  Spicetify.Player.addEventListener("play", schedulePause);
+  // Re-schedule on song change
   Spicetify.Player.addEventListener("songchange", schedulePause);
 
   // Menu toggle
   const menuItem = new Spicetify.Menu.Item(
     "Random Pause",
     false,
-    (state) => {
-      enabled = state;
+    (self) => {
+      enabled = !enabled;
+      self.setState(enabled);
       if (enabled) {
         schedulePause();
+        Spicetify.showNotification("Random Pause enabled");
       } else {
         clearTimeout(timer);
+        Spicetify.showNotification("Random Pause disabled");
       }
     }
   );
 
   menuItem.register();
+  console.log("[Random Pause] Menu item registered");
 })();
