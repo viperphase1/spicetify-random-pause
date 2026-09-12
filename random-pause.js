@@ -1,7 +1,7 @@
 // random-pause.js
 (function RandomPause() {
   const ready = Spicetify?.Player &&
-                Spicetify?.Menu &&
+                Spicetify?.Playbar &&
                 Spicetify?.React &&
                 Spicetify?.ReactDOM &&
                 Spicetify?.showNotification;
@@ -57,23 +57,52 @@
   // Re-schedule on song change
   Spicetify.Player.addEventListener("songchange", schedulePause);
 
-  // Menu toggle
-  const menuItem = new Spicetify.Menu.Item(
-    "Random Pause",
-    false,
-    (self) => {
-      enabled = !enabled;
-      self.setState(enabled);
-      if (enabled) {
-        schedulePause();
-        Spicetify.showNotification("Random Pause enabled");
-      } else {
-        clearTimeout(timer);
-        Spicetify.showNotification("Random Pause disabled");
-      }
-    }
-  );
+  // Playbar button - pause bars with question mark
+  const icon = `<svg role="img" height="16" width="16" viewBox="0 0 16 16" fill="currentColor">
+    <rect x="1" y="2" width="2.5" height="12" rx="0.6"/>
+    <rect x="5.5" y="2" width="2.5" height="12" rx="0.6"/>
+    <path d="M11.5 2.5c2 0 3.2 1.2 3.2 2.8 0 1.8-1.5 2.3-2.3 3.2-.5.5-.6 1-.6 1.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    <circle cx="11.8" cy="13.5" r="1.2"/>
+  </svg>`;
 
-  menuItem.register();
-  console.log("[Random Pause] Menu item registered");
+  try {
+    const button = new Spicetify.Playbar.Button(
+      "Random Pause",
+      icon,
+      (self) => {
+        enabled = !enabled;
+        self.active = enabled;
+        if (enabled) {
+          schedulePause();
+          Spicetify.showNotification("Random Pause enabled");
+        } else {
+          clearTimeout(timer);
+          Spicetify.showNotification("Random Pause disabled");
+        }
+      },
+      false,  // disabled
+      false   // active (initial state)
+    );
+    console.log("[Random Pause] Playbar button created:", button);
+  } catch (e) {
+    console.error("[Random Pause] Failed to create Playbar button:", e);
+    // Fallback to menu
+    const menuItem = new Spicetify.Menu.Item(
+      "Random Pause",
+      false,
+      (self) => {
+        enabled = !enabled;
+        self.setState(enabled);
+        if (enabled) {
+          schedulePause();
+          Spicetify.showNotification("Random Pause enabled");
+        } else {
+          clearTimeout(timer);
+          Spicetify.showNotification("Random Pause disabled");
+        }
+      }
+    );
+    menuItem.register();
+    console.log("[Random Pause] Fell back to Menu item");
+  }
 })();
